@@ -3,12 +3,9 @@ name: Woot Restock Check
 on:
   schedule:
     # Safety net: relaunch every 6 hours in case a run dies.
-    # The chain-trigger below normally restarts it immediately.
+    # The relaunch workflow normally restarts it immediately.
     - cron: "7 */6 * * *"
   workflow_dispatch: {}   # manual start from the Actions tab
-  workflow_run:
-    workflows: ["Woot Restock Check"]
-    types: [completed]    # chain: relaunch as soon as the previous run ends
 
 permissions:
   contents: write
