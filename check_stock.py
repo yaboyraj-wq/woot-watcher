@@ -79,6 +79,7 @@ def notify_discord(message: str) -> None:
     payload = json.dumps({
         "content": message,
         "username": "Woot Watcher",
+        "allowed_mentions": {"parse": ["everyone"]},
     }).encode("utf-8")
     req = urllib.request.Request(
         WEBHOOK_URL,
@@ -105,7 +106,7 @@ def check_known_offer(state: dict) -> None:
     if in_stock and not sold_out:
         if not state.get("notified_in_stock"):
             notify_discord(
-                f"🟢 **Eureka J20 is BACK IN STOCK on Woot!**\n{OFFER_URL}"
+                f"@everyone 🟢 **Eureka J20 is BACK IN STOCK on Woot!**\n{OFFER_URL}"
             )
             state["notified_in_stock"] = True
     else:
@@ -131,7 +132,7 @@ def check_for_new_listings(state: dict) -> None:
 
     for path in sorted(new):
         notify_discord(
-            f"🆕 **New Eureka J20 listing spotted on Woot!**\nhttps://www.woot.com{path}"
+            f"@everyone 🆕 **New Eureka J20 listing spotted on Woot!**\nhttps://www.woot.com{path}"
         )
 
     state["known_urls"] = sorted(known | found)
