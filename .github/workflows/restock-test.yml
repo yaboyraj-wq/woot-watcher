@@ -1,0 +1,39 @@
+name: Woot Restock Notification Test
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  test-restock-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send test restock notification
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          webhook_url = os.environ["DISCORD_WEBHOOK_URL"].strip()
+          if not webhook_url:
+              raise SystemExit("DISCORD_WEBHOOK_URL is empty")
+
+          payload = json.dumps({
+              "content": "@everyone TEST ONLY - 🟢 **Eureka J20 is BACK IN STOCK on Woot!**\nhttps://www.woot.com/offers/new-eureka-j20-robot-vacuum-and-mop-4",
+              "username": "Woot Watcher",
+              "allowed_mentions": {"parse": ["everyone"]},
+          }).encode("utf-8")
+
+          req = urllib.request.Request(
+              webhook_url,
+              data=payload,
+              headers={"Content-Type": "application/json", "User-Agent": "Woot Watcher Test"},
+          )
+          with urllib.request.urlopen(req, timeout=30) as resp:
+              print(f"Restock test notification sent, status {resp.status}")
+          PY
