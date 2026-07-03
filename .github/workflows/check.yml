@@ -1,0 +1,49 @@
+name: Woot Restock Check
+
+on:
+  schedule:
+    # Safety net: relaunch every 6 hours in case a run dies.
+    # The chain-trigger below normally restarts it immediately.
+    - cron: "7 */6 * * *"
+  workflow_dispatch: {}   # manual start from the Actions tab
+  workflow_run:
+    workflows: ["Woot Restock Check"]
+    types: [completed]    # chain: relaunch as soon as the previous run ends
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: woot-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run stock check loop (every 60s for ~5.5 hours)
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          LOOP_SECONDS: "19800"    # ~5.5 hours per job
+          CHECK_INTERVAL: "60"     # seconds between checks
+        run: python check_stock.py
+
+      - name: Persist state
+        if: always()
+        run: |
+          git config user.name "woot-watcher-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git pull --rebase || true
+          git add state.json
+          git diff --cached --quiet || git commit -m "Update watcher state [skip ci]"
+          git push || true
